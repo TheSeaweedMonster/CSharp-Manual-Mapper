@@ -13,7 +13,7 @@ namespace ManualMapApi
 {
     public class MapInject
     {
-        private class imports
+        private class Imports
         {
             public const uint PAGE_NOACCESS = 0x1;
             public const uint PAGE_READONLY = 0x2;
@@ -399,7 +399,7 @@ namespace ManualMapApi
 
         public static bool ManualMap(Process proc, string filepath)
         {
-            int handle = imports.OpenProcess(imports.PROCESS_ALL_ACCESS, false, proc.Id);
+            int handle = Imports.OpenProcess(Imports.PROCESS_ALL_ACCESS, false, proc.Id);
 
             if (handle == 0)
             {
@@ -428,26 +428,26 @@ namespace ManualMapApi
                 throw new Exception("Invalid platform");
             }
 
-            var pShellcode = imports.VirtualAllocEx(handle, 0, 0x1000, imports.MEM_COMMIT | imports.MEM_RESERVE, imports.PAGE_EXECUTE_READWRITE);
-            var pTargetBase = imports.VirtualAllocEx(handle, 0, (int)pOldOptHeader.SizeOfImage, imports.MEM_COMMIT | imports.MEM_RESERVE, imports.PAGE_EXECUTE_READWRITE);
+            var pShellcode = Imports.VirtualAllocEx(handle, 0, 0x1000, Imports.MEM_COMMIT | Imports.MEM_RESERVE, Imports.PAGE_EXECUTE_READWRITE);
+            var pTargetBase = Imports.VirtualAllocEx(handle, 0, (int)pOldOptHeader.SizeOfImage, Imports.MEM_COMMIT | Imports.MEM_RESERVE, Imports.PAGE_EXECUTE_READWRITE);
             
             if (pTargetBase == 0 || pShellcode == 0)
             {
-                throw new Exception("Target process memory allocation failed (ex) [Error Code: " + imports.GetLastError() + "]");
+                throw new Exception("Target process memory allocation failed (ex) [Error Code: " + Imports.GetLastError() + "]");
             }
 
             MANUAL_MAPPING_DATA data;
-            data.pLoadLibraryA = imports.GetProcAddress(imports.GetModuleHandle("KERNEL32.dll"), "LoadLibraryA");
-            data.pGetProcAddress = imports.GetProcAddress(imports.GetModuleHandle("KERNEL32.dll"), "GetProcAddress");
+            data.pLoadLibraryA = Imports.GetProcAddress(Imports.GetModuleHandle("KERNEL32.dll"), "LoadLibraryA");
+            data.pGetProcAddress = Imports.GetProcAddress(Imports.GetModuleHandle("KERNEL32.dll"), "GetProcAddress");
             data.pbase = pTargetBase;
             data.hMod = 0;
 
             int nBytes = 0;
 
             // only first 0x1000 byes for the header
-            if (imports.WriteProcessMemory(handle, pTargetBase, pSrcData, 0x1000, ref nBytes) == 0) 
+            if (Imports.WriteProcessMemory(handle, pTargetBase, pSrcData, 0x1000, ref nBytes) == 0) 
             {
-                throw new Exception("Can't write file header [Error Code: " + imports.GetLastError() + "]");
+                throw new Exception("Can't write file header [Error Code: " + Imports.GetLastError() + "]");
             }
 
             /*
@@ -473,46 +473,46 @@ namespace ManualMapApi
                         bytes[j] = pSrcData[pSectionHeader.PointerToRawData + j];
                     }
 
-                    if (imports.WriteProcessMemory(handle, pTargetBase + (int)pSectionHeader.VirtualAddress, bytes, bytes.Length, ref nBytes) == 0)
+                    if (Imports.WriteProcessMemory(handle, pTargetBase + (int)pSectionHeader.VirtualAddress, bytes, bytes.Length, ref nBytes) == 0)
                     {
-                        throw new Exception("Can't map sections [Error Code: " + imports.GetLastError() + "]");
+                        throw new Exception("Can't map sections [Error Code: " + Imports.GetLastError() + "]");
                     }
                 }
             }
 
             //Mapping params
-            int MappingDataAlloc = imports.VirtualAllocEx(handle, 0, 16, imports.MEM_COMMIT, imports.PAGE_READWRITE);
+            int MappingDataAlloc = Imports.VirtualAllocEx(handle, 0, 16, Imports.MEM_COMMIT, Imports.PAGE_READWRITE);
             if (MappingDataAlloc == 0)
             {
-                throw new Exception("Target process mapping allocation failed (ex) [Error Code: " + imports.GetLastError() + "]");
+                throw new Exception("Target process mapping allocation failed (ex) [Error Code: " + Imports.GetLastError() + "]");
             }
 
-            imports.WriteProcessMemory(handle, MappingDataAlloc + 0, BitConverter.GetBytes(data.pLoadLibraryA), 4, ref nBytes);
-            imports.WriteProcessMemory(handle, MappingDataAlloc + 4, BitConverter.GetBytes(data.pGetProcAddress), 4, ref nBytes);
-            imports.WriteProcessMemory(handle, MappingDataAlloc + 8, BitConverter.GetBytes(data.pbase), 4, ref nBytes);
-            imports.WriteProcessMemory(handle, MappingDataAlloc + 12, BitConverter.GetBytes(data.hMod), 4, ref nBytes);
+            Imports.WriteProcessMemory(handle, MappingDataAlloc + 0, BitConverter.GetBytes(data.pLoadLibraryA), 4, ref nBytes);
+            Imports.WriteProcessMemory(handle, MappingDataAlloc + 4, BitConverter.GetBytes(data.pGetProcAddress), 4, ref nBytes);
+            Imports.WriteProcessMemory(handle, MappingDataAlloc + 8, BitConverter.GetBytes(data.pbase), 4, ref nBytes);
+            Imports.WriteProcessMemory(handle, MappingDataAlloc + 12, BitConverter.GetBytes(data.hMod), 4, ref nBytes);
 
             //Shell code
             if (pShellcode == 0)
             {
-                throw new Exception("Memory shellcode allocation failed (ex) [Error Code: " + imports.GetLastError() + "]");
+                throw new Exception("Memory shellcode allocation failed (ex) [Error Code: " + Imports.GetLastError() + "]");
             }
 
             var payload = makePayload();
 
-            if (imports.WriteProcessMemory(handle, pShellcode, payload, payload.Length, ref nBytes) == 0)
+            if (Imports.WriteProcessMemory(handle, pShellcode, payload, payload.Length, ref nBytes) == 0)
             {
-                throw new Exception("Can't write shellcode [Error Code: " + imports.GetLastError() + "]");
+                throw new Exception("Can't write shellcode [Error Code: " + Imports.GetLastError() + "]");
             }
 
             int thId = 0;
-            var hThread = imports.CreateRemoteThread(handle, 0, 0, pShellcode, MappingDataAlloc, 0, out thId);
+            var hThread = Imports.CreateRemoteThread(handle, 0, 0, pShellcode, MappingDataAlloc, 0, out thId);
             if (hThread == 0 || thId == 0)
             {
-                throw new Exception("Thread creation failed [Error Code: " + imports.GetLastError() + "]");
+                throw new Exception("Thread creation failed [Error Code: " + Imports.GetLastError() + "]");
             }
 
-            imports.CloseHandle(hThread);
+            Imports.CloseHandle(hThread);
             //MessageBox.Show("Thread created at: " + pShellcode.ToString("X8") + ", waiting for return...");
 
             
@@ -521,7 +521,7 @@ namespace ManualMapApi
             while (hCheck == 0)
             {
                 uint exitcode = 0;
-                imports.GetExitCodeProcess(handle, out exitcode);
+                Imports.GetExitCodeProcess(handle, out exitcode);
                 if (exitcode != STILL_ACTIVE)
                 {
                     throw new Exception("Process crashed, exit code: " + exitcode);
@@ -530,7 +530,7 @@ namespace ManualMapApi
                 MANUAL_MAPPING_DATA dataChecked;
 
                 byte[] readBytes = new byte[16];
-                if (imports.ReadProcessMemory(handle, MappingDataAlloc, readBytes, 16, ref nBytes) == 0)
+                if (Imports.ReadProcessMemory(handle, MappingDataAlloc, readBytes, 16, ref nBytes) == 0)
                 {
                     throw new Exception("Failed to read process memory");
                 }
@@ -558,7 +558,7 @@ namespace ManualMapApi
             Array.Clear(emptyBuffer, 0, emptyBuffer.Length);
 
             
-            if (imports.WriteProcessMemory(handle, pTargetBase, emptyBuffer, 0x1000, ref nBytes) == 0)
+            if (Imports.WriteProcessMemory(handle, pTargetBase, emptyBuffer, 0x1000, ref nBytes) == 0)
             {
                 throw new Exception("Failed to erase file header(s)");
             }
@@ -577,7 +577,7 @@ namespace ManualMapApi
                     var headerName = "";
                     byte[] buffer = new byte[16];
 
-                    imports.ReadProcessMemory(handle, pSectionHeaderAt, buffer, 16, ref nBytes);
+                    Imports.ReadProcessMemory(handle, pSectionHeaderAt, buffer, 16, ref nBytes);
 
                     for (int j = 0; j < 16; j++)
                     {
@@ -589,9 +589,9 @@ namespace ManualMapApi
                     
                     if (headerName == ".pdata" || headerName == ".rsrc" || headerName == ".reloc")
                     {
-                        if (imports.WriteProcessMemory(handle, pTargetBase + (int)pSectionHeader.VirtualAddress, emptyBuffer2, (int)pSectionHeader.SizeOfRawData, ref nBytes) == 0)
+                        if (Imports.WriteProcessMemory(handle, pTargetBase + (int)pSectionHeader.VirtualAddress, emptyBuffer2, (int)pSectionHeader.SizeOfRawData, ref nBytes) == 0)
                         {
-                            throw new Exception("Can't clear section " + headerName + " [Error code: " + imports.GetLastError() + "]");
+                            throw new Exception("Can't clear section " + headerName + " [Error code: " + Imports.GetLastError() + "]");
                         }
                     }
                 }
