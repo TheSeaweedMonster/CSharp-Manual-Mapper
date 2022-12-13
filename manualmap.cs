@@ -397,33 +397,6 @@ namespace ManualMapApi
             };
         }
 
-        public static int codeCaveAt = 0;
-        public static int codeCaveStart = 0;
-        public static int codeCaveEnd = 0;
-
-        // reduces detection by using a code cave
-        public static void setCave(int start, int end)
-        {
-            codeCaveStart = start;
-            codeCaveEnd = end;
-            codeCaveAt = codeCaveStart;
-        }
-
-        public static int silentAlloc(int handle, int size, uint protect)
-        {
-            if (codeCaveStart == 0 || codeCaveAt == 0)
-            {
-                // allocate new memory
-                return imports.VirtualAllocEx(handle, 0, size, imports.MEM_COMMIT | imports.MEM_RESERVE, protect);
-            }
-
-            // change page protection of a code cave and return that (less detectable in games)
-            int at = codeCaveAt;
-            uint oldProtect = 0;
-            imports.VirtualProtectEx(handle, codeCaveAt, size, protect, ref oldProtect);
-            codeCaveAt += size + (size % 4);
-            return at;
-        }
 
         public static bool ManualMap(Process proc, string filepath)
         {
@@ -439,7 +412,6 @@ namespace ManualMapApi
             IMAGE_NT_HEADERS pOldNtHeader;
             IMAGE_OPTIONAL_HEADER pOldOptHeader;
             IMAGE_FILE_HEADER pOldFileHeader;
-            int pTargetBase = 0;
 
             var imageDosHeader = toImageDosHeader(pSrcData, 0);
 
@@ -457,16 +429,10 @@ namespace ManualMapApi
                 throw new Exception("Invalid platform");
             }
 
-
-            // code cave(s) should be set prior to this point
-            //
-
-            var pShellcode = silentAlloc(handle, 0x1000, imports.PAGE_EXECUTE_READWRITE);
-
-            //var caveStart = imports.GetModuleHandle("windows.storage.dll") + 0x200000;
-            //setCave(caveStart, caveStart + 0x300000);
-            pTargetBase = silentAlloc(handle, (int)pOldOptHeader.SizeOfImage, imports.PAGE_EXECUTE_READWRITE);
-            if (pTargetBase == 0)
+            var pShellcode = imports.VirtualAllocEx(handle, 0, 0x1000, imports.MEM_COMMIT | imports.MEM_RESERVE, imports.PAGE_EXECUTE_READWRITE);
+            var pTargetBase = imports.VirtualAllocEx(handle, 0, (int)pOldOptHeader.SizeOfImage, imports.MEM_COMMIT | imports.MEM_RESERVE, imports.PAGE_EXECUTE_READWRITE);
+            
+            if (pTargetBase == 0 || pShellcode == 0)
             {
                 throw new Exception("Target process memory allocation failed (ex) [Error Code: " + imports.GetLastError() + "]");
             }
@@ -508,8 +474,6 @@ namespace ManualMapApi
                         bytes[j] = pSrcData[pSectionHeader.PointerToRawData + j];
                     }
 
-                    //printf("Mapping section [size %08X] to %p\n", pSectionHeader->SizeOfRawData, pTargetBase + pSectionHeader->VirtualAddress);
-                    
                     if (imports.WriteProcessMemory(handle, pTargetBase + (int)pSectionHeader.VirtualAddress, bytes, bytes.Length, ref nBytes) == 0)
                     {
                         throw new Exception("Can't map sections [Error Code: " + imports.GetLastError() + "]");
@@ -542,7 +506,6 @@ namespace ManualMapApi
                 throw new Exception("Can't write shellcode [Error Code: " + imports.GetLastError() + "]");
             }
 
-            //printf("MappingDataAlloc: %p\n", MappingDataAlloc);
             int thId = 0;
             var hThread = imports.CreateRemoteThread(handle, 0, 0, pShellcode, MappingDataAlloc, 0, out thId);
             if (hThread == 0 || thId == 0)
@@ -551,7 +514,6 @@ namespace ManualMapApi
             }
 
             imports.CloseHandle(hThread);
-
             //MessageBox.Show("Thread created at: " + pShellcode.ToString("X8") + ", waiting for return...");
 
             
