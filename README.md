@@ -1,6 +1,3 @@
-# MMINJ
-Open-source Manual Map Injection for C# (All External)
-
 # How To Use
 Include manualmap.cs in your C# project (win forms, wpf, etc.) <br>
 Import the ManualMapApi namespace <br>
