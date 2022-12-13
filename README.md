@@ -6,8 +6,8 @@ Include manualmap.cs in your C# project (win forms, wpf, etc.)
 Import the ManualMapApi namespace
 use function "ManualMap" like so:
 
-// ManualMap(Process proc, string filepath)
-ManualMap(Process.GetProcessesByName("FunGameToHack")[0], "C:/.../myfundll.dll");
+// ManualMap(Process proc, string filepath) <br>
+ManualMap(Process.GetProcessesByName("FunGameToHack")[0], "C:/.../myfundll.dll"); <br>
 
 This will inject your DLL or binary file safely  without any ties to the module
 whatsoever (it is virtually allocated into the process). So, it is far more effective and less detectable than traditional LoadLibrary methods.
