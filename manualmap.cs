@@ -91,7 +91,7 @@ namespace ManualMapApi
             public static extern int CreateRemoteThread(int hProcess, int lpThreadAttributes, uint dwStackSize, int lpStartAddress, int lpParameter, uint dwCreationFlags, out int lpThreadId);
         }
 
-        public struct IMAGE_DATA_DIRECTORY
+        private struct IMAGE_DATA_DIRECTORY
         {
             public UInt32 VirtualAddress;
             public UInt32 Size;
@@ -99,7 +99,7 @@ namespace ManualMapApi
 
         const int IMAGE_NUMBEROF_DIRECTORY_ENTRIES = 16;
 
-        public struct IMAGE_OPTIONAL_HEADER // IMAGE_OPTIONAL_HEADER32
+        private struct IMAGE_OPTIONAL_HEADER // IMAGE_OPTIONAL_HEADER32
         {
             //
             // Standard fields.
@@ -142,7 +142,7 @@ namespace ManualMapApi
             public IMAGE_DATA_DIRECTORY[] DataDirectory;
         };
 
-        public static IMAGE_OPTIONAL_HEADER toImageOptionalHeader(byte[] byteArray, int offset)
+        private static IMAGE_OPTIONAL_HEADER toImageOptionalHeader(byte[] byteArray, int offset)
         {
             IMAGE_OPTIONAL_HEADER x;
             x.Magic = BitConverter.ToUInt16(byteArray, offset + 0);
@@ -190,7 +190,7 @@ namespace ManualMapApi
         }
 
 
-        public struct IMAGE_FILE_HEADER
+        private struct IMAGE_FILE_HEADER
         {
             public UInt16 Machine;
             public UInt16 NumberOfSections;
@@ -201,7 +201,7 @@ namespace ManualMapApi
             public UInt16 Characteristics;
         };
 
-        public static IMAGE_FILE_HEADER toImageFileHeader(byte[] byteArray, int offset)
+        private static IMAGE_FILE_HEADER toImageFileHeader(byte[] byteArray, int offset)
         {
             IMAGE_FILE_HEADER x;
             x.Machine = BitConverter.ToUInt16(byteArray, offset + 0);
@@ -214,7 +214,7 @@ namespace ManualMapApi
             return x;
         }
 
-        public struct IMAGE_DOS_HEADER
+        private struct IMAGE_DOS_HEADER
         {
             public UInt16 e_magic;                     // Magic number
             public UInt16 e_cblp;                      // Bytes on last page of file
@@ -237,7 +237,7 @@ namespace ManualMapApi
             public UInt32 e_lfanew;                    // LONG // File address of new exe header
         };
 
-        public static IMAGE_DOS_HEADER toImageDosHeader(byte[] byteArray, int offset)
+        private static IMAGE_DOS_HEADER toImageDosHeader(byte[] byteArray, int offset)
         {
             IMAGE_DOS_HEADER x;
             x.e_magic = BitConverter.ToUInt16(byteArray, offset + 0);
@@ -276,14 +276,14 @@ namespace ManualMapApi
             return x;
         }
 
-        public struct IMAGE_NT_HEADERS // IMAGE_NT_HEADERS32
+        private struct IMAGE_NT_HEADERS // IMAGE_NT_HEADERS32
         {
             public UInt32 Signature; // + 0
             public IMAGE_FILE_HEADER FileHeader; // + 4
             public IMAGE_OPTIONAL_HEADER OptionalHeader; // + 24
         };
 
-        public static IMAGE_NT_HEADERS toImageNtHeaders(byte[] byteArray, int offset)
+        private static IMAGE_NT_HEADERS toImageNtHeaders(byte[] byteArray, int offset)
         {
             IMAGE_NT_HEADERS ntHeaders;
             ntHeaders.Signature = BitConverter.ToUInt32(byteArray, offset + 0);
@@ -293,7 +293,7 @@ namespace ManualMapApi
         }
 
 
-        public struct MANUAL_MAPPING_DATA
+        private struct MANUAL_MAPPING_DATA
         {
             public int pLoadLibraryA;
             public int pGetProcAddress;
@@ -301,7 +301,7 @@ namespace ManualMapApi
             public int hMod;
         };
 
-        public struct IMAGE_SECTION_HEADER // size of struct = 0x28
+        private struct IMAGE_SECTION_HEADER // size of struct = 0x28
         {
             public byte[] Name; // [IMAGE_SIZEOF_SHORT_NAME] = [8]
             public UInt32 PhysicalAddressOrVirtualSize;
@@ -321,7 +321,7 @@ namespace ManualMapApi
         }
 
 
-        public static IMAGE_SECTION_HEADER toImageSectionHeader(byte[] byteArray, int offset)
+        private static IMAGE_SECTION_HEADER toImageSectionHeader(byte[] byteArray, int offset)
         {
             IMAGE_SECTION_HEADER sectionHeader;
             sectionHeader.Name = new byte[8];
@@ -348,7 +348,7 @@ namespace ManualMapApi
         const uint STATUS_PENDING = 0x00000103;
         const uint STILL_ACTIVE = STATUS_PENDING;
 
-        public static byte[] makePayload()
+        private static byte[] makePayload()
         {
             return new byte[] {
                 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x60, 0x83, 0x7D, 0x08, 0x00, 0x75, 0x0F, 0x8B, 0x45, 0x08, 0xC7,
