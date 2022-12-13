@@ -12,4 +12,4 @@ MapInject.ManualMap(Process.GetProcessesByName("FunGameToHack")[0], "C:/.../myfu
 This will inject your DLL or binary file safely  without any ties to the module <br>
 whatsoever (it is virtually allocated into the process). So, it is far more effective and less detectable than traditional LoadLibrary methods.
 
-That being said, some games might detect the presence of virtually allocated memory with PAGE_EXECUTE privileges (this would most likely apply to using LoadLibrary as well)
+That being said, some games might detect the presence of virtually allocated memory with PAGE_EXECUTE privileges (this would apply even more-so to using LoadLibrary)
